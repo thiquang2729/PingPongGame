@@ -12,8 +12,6 @@ class Program
     static bool _waitingForOpponent;
     static int _boardWidth = 80;
     static int _boardHeight = 24;
-    static int _boardWidth = 80;
-    static int _boardHeight = 24;
 
     static async Task Main(string[] args)
     {
@@ -168,19 +166,28 @@ class Program
     static void OnReconnected()
     {
         Console.Clear();
-        Console.WriteLine("✓ Đã kết nối lại! Tiếp tục game...");
-        Thread.Sleep(1000);
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("✓ Đã kết nối lại! Đang tải game...");
+        Console.ResetColor();
+        
+        // Khởi tạo Display ngay lập tức
+        _display = new Display(_boardWidth, _boardHeight);
+        _display.Initialize();
+        _isGameRunning = true;
+        _waitingForOpponent = false;
+        _isInRoom = false;
     }
 
     static void OnGameResume(int width, int height)
     {
-        if (_display == null)
-        {
-            _display = new Display(width, height);
-            _display.Initialize();
-        }
+        Console.Clear();
+        _boardWidth = width;
+        _boardHeight = height;
+        _display = new Display(width, height);
+        _display.Initialize();
         _isGameRunning = true;
         _waitingForOpponent = false;
+        _isInRoom = false;
     }
 
     static async Task InputLoopAsync()
