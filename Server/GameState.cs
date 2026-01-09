@@ -29,7 +29,7 @@ public class GameState
     public int Score2 { get; private set; }
 
     // Điểm thắng
-    public int WinningScore { get; } = 5;
+    public int WinningScore { get; } = 1000000;
 
     // Trạng thái game
     public bool IsGameOver => Score1 >= WinningScore || Score2 >= WinningScore;

@@ -20,10 +20,15 @@ public class NetworkClient
     // Events
     public event Action<int>? OnPlayerIdReceived;
     public event Action? OnWaiting;
+    public event Action<int, int>? OnRoomJoined;
+    public event Action<bool, bool>? OnReadyStatusUpdate;
     public event Action<int, int>? OnGameStart;
+    public event Action<int, int>? OnGameResume;
     public event Action<int, int, int, int, int, int>? OnGameUpdate;
     public event Action<int>? OnGameOver;
     public event Action<int>? OnOpponentDisconnected;
+    public event Action? OnOpponentReconnected;
+    public event Action? OnReconnected;
 
     private DateTime _lastMessageTime;
 
@@ -116,7 +121,7 @@ public class NetworkClient
                 OnWaiting?.Invoke();
                 break;
 
-            case "START":
+            case "ROOM":
                 if (parts.Length > 1)
                 {
                     string[] size = parts[1].Split(',');
@@ -124,7 +129,33 @@ public class NetworkClient
                         int.TryParse(size[0], out int width) &&
                         int.TryParse(size[1], out int height))
                     {
-                        OnGameStart?.Invoke(width, height);
+                        OnRoomJoined?.Invoke(width, height);
+                    }
+                }
+                break;
+
+            case "READY_STATUS":
+                if (parts.Length > 1)
+                {
+                    string[] status = parts[1].Split(',');
+                    if (status.Length >= 2 &&
+                        int.TryParse(status[0], out int p1Ready) &&
+                        int.TryParse(status[1], out int p2Ready))
+                    {
+                        OnReadyStatusUpdate?.Invoke(p1Ready == 1, p2Ready == 1);
+                    }
+                }
+                break;
+
+            case "START":
+                if (parts.Length > 1)
+                {
+                    string[] size = parts[1].Split(',');
+                    if (size.Length >= 2 &&
+                        int.TryParse(size[0], out int w) &&
+                        int.TryParse(size[1], out int h))
+                    {
+                        OnGameStart?.Invoke(w, h);
                     }
                 }
                 break;
@@ -159,7 +190,43 @@ public class NetworkClient
                     OnOpponentDisconnected?.Invoke(disconnectedPlayer);
                 }
                 break;
+
+            case "OPPONENT_DISCONNECTED":
+                if (parts.Length > 1 && int.TryParse(parts[1], out int dcPlayer))
+                {
+                    OnOpponentDisconnected?.Invoke(dcPlayer);
+                }
+                break;
+
+            case "OPPONENT_RECONNECTED":
+                OnOpponentReconnected?.Invoke();
+                break;
+
+            case "RECONNECTED":
+                OnReconnected?.Invoke();
+                break;
+
+            case "RESUME":
+                if (parts.Length > 1)
+                {
+                    string[] sz = parts[1].Split(',');
+                    if (sz.Length >= 2 &&
+                        int.TryParse(sz[0], out int rw) &&
+                        int.TryParse(sz[1], out int rh))
+                    {
+                        OnGameResume?.Invoke(rw, rh);
+                    }
+                }
+                break;
         }
+    }
+
+    /// <summary>
+    /// Gửi lệnh sẵn sàng
+    /// </summary>
+    public async Task SendReadyAsync()
+    {
+        await SendMessageAsync("READY");
     }
 
     /// <summary>
