@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Pong.Protocol;
 
 namespace Server;
 
@@ -93,18 +94,18 @@ public class GameServer
             _client1 = await _listener!.AcceptTcpClientAsync();
             _stream1 = _client1.GetStream();
             _player1Connected = true;
-            await SendMessageAsync(_stream1, "ID|1");
+            await SendMessageAsync(_stream1, $"{PongCommands.Id}|1");
             Console.WriteLine($"✓ Player 1 đã kết nối từ {_client1.Client.RemoteEndPoint}");
 
             // Thông báo chờ Player 2
-            await SendMessageAsync(_stream1, "WAIT");
+            await SendMessageAsync(_stream1, PongCommands.Wait);
 
             // Chờ Player 2
             Console.WriteLine("Đang chờ Player 2...");
             _client2 = await _listener.AcceptTcpClientAsync();
             _stream2 = _client2.GetStream();
             _player2Connected = true;
-            await SendMessageAsync(_stream2, "ID|2");
+            await SendMessageAsync(_stream2, $"{PongCommands.Id}|2");
             Console.WriteLine($"✓ Player 2 đã kết nối từ {_client2.Client.RemoteEndPoint}");
 
             // Bắt đầu luồng nhận
@@ -140,7 +141,7 @@ public class GameServer
         _player2Ready = false;
 
         // Thông báo vào phòng
-        string roomInfo = $"ROOM|{_gameState.BoardWidth},{_gameState.BoardHeight}";
+        string roomInfo = $"{PongCommands.Room}|{PongWire.Csv(_gameState.BoardWidth, _gameState.BoardHeight)}";
         await BroadcastAsync(roomInfo);
         Console.WriteLine("\n=== CHỜ CẢ 2 NGƯỜI CHƠI SẴN SÀNG ===\n");
 
@@ -160,7 +161,7 @@ public class GameServer
         if (!_isRunning) return;
 
         // Bắt đầu game
-        string startInfo = $"START|{_gameState.BoardWidth},{_gameState.BoardHeight}";
+        string startInfo = $"{PongCommands.Start}|{PongWire.Csv(_gameState.BoardWidth, _gameState.BoardHeight)}";
         await BroadcastAsync(startInfo);
         Console.WriteLine("\n=== GAME BẮT ĐẦU ===\n");
     }
@@ -203,7 +204,7 @@ public class GameServer
                     var connectedStream = _disconnectedPlayer == 1 ? _stream2 : _stream1;
                     if (connectedStream != null)
                     {
-                        await SendMessageAsync(connectedStream, $"OPPONENT_DISCONNECTED|{_disconnectedPlayer}");
+                        await SendMessageAsync(connectedStream, $"{PongCommands.OpponentDisconnected}|{_disconnectedPlayer}");
                     }
 
                     Console.WriteLine($"\n⚠ Player {_disconnectedPlayer} mất kết nối!");
@@ -221,7 +222,7 @@ public class GameServer
                     Console.WriteLine($"✓ Player {_disconnectedPlayer} đã kết nối lại!");
                     
                     // Gửi lại trạng thái game hiện tại
-                    await BroadcastAsync($"RESUME|{_gameState.BoardWidth},{_gameState.BoardHeight}");
+                    await BroadcastAsync($"{PongCommands.Resume}|{PongWire.Csv(_gameState.BoardWidth, _gameState.BoardHeight)}");
                     await Task.Delay(500);
                 }
 
@@ -253,7 +254,7 @@ public class GameServer
         // Game kết thúc
         if (_gameState.IsGameOver)
         {
-            string overMsg = $"OVER|{_gameState.Winner}";
+            string overMsg = $"{PongCommands.Over}|{_gameState.Winner}";
             await BroadcastAsync(overMsg);
             Console.WriteLine($"\n=== GAME KẾT THÚC - Player {_gameState.Winner} THẮNG! ===");
         }
@@ -282,8 +283,8 @@ public class GameServer
                     _client1 = newClient;
                     _stream1 = newStream;
                     _player1Connected = true;
-                    await SendMessageAsync(_stream1, "ID|1");
-                    await SendMessageAsync(_stream1, "RECONNECTED");
+                    await SendMessageAsync(_stream1, $"{PongCommands.Id}|1");
+                    await SendMessageAsync(_stream1, PongCommands.Reconnected);
                     _ = Task.Run(() => ReceiveFromClientAsync(1));
                 }
                 else
@@ -292,8 +293,8 @@ public class GameServer
                     _client2 = newClient;
                     _stream2 = newStream;
                     _player2Connected = true;
-                    await SendMessageAsync(_stream2, "ID|2");
-                    await SendMessageAsync(_stream2, "RECONNECTED");
+                    await SendMessageAsync(_stream2, $"{PongCommands.Id}|2");
+                    await SendMessageAsync(_stream2, PongCommands.Reconnected);
                     _ = Task.Run(() => ReceiveFromClientAsync(2));
                 }
 
@@ -301,7 +302,7 @@ public class GameServer
                 var otherStream = playerToWait == 1 ? _stream2 : _stream1;
                 if (otherStream != null)
                 {
-                    await SendMessageAsync(otherStream, "OPPONENT_RECONNECTED");
+                    await SendMessageAsync(otherStream, PongCommands.OpponentReconnected);
                 }
 
                 _waitingForReconnect = false;
@@ -379,12 +380,17 @@ public class GameServer
     /// </summary>
     private void ProcessMessage(string message, int playerId)
     {
-        string[] parts = message.Split('|');
-        string command = parts[0];
+        if (!PongWire.TryParseLine(message, out PongMessage parsed))
+        {
+            return;
+        }
+
+        string command = parsed.Command;
+        string? payload = parsed.Payload;
 
         switch (command)
         {
-            case "READY":
+            case PongCommands.Ready:
                 lock (_lock)
                 {
                     if (playerId == 1) _player1Ready = true;
@@ -393,17 +399,17 @@ public class GameServer
                 Console.WriteLine($"Player {playerId} đã sẵn sàng!");
                 break;
 
-            case "MOVE":
-                if (parts.Length > 1)
+            case PongCommands.Move:
+                if (!string.IsNullOrWhiteSpace(payload))
                 {
                     lock (_lock)
                     {
-                        _gameState.MovePaddle(playerId, parts[1]);
+                        _gameState.MovePaddle(playerId, payload);
                     }
                 }
                 break;
 
-            case "QUIT":
+            case PongCommands.Quit:
                 Console.WriteLine($"Player {playerId} thoát game");
                 _isRunning = false;
                 break;

@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Text;
+using Pong.Protocol;
 
 namespace Client;
 
@@ -104,118 +105,88 @@ public class NetworkClient
     /// </summary>
     private void ProcessMessage(string message)
     {
-        string[] parts = message.Split('|');
-        string command = parts[0];
+        if (!PongWire.TryParseLine(message, out PongMessage parsed))
+        {
+            return;
+        }
+
+        string command = parsed.Command;
+        string? payload = parsed.Payload;
 
         switch (command)
         {
-            case "ID":
-                if (parts.Length > 1 && int.TryParse(parts[1], out int id))
+            case PongCommands.Id:
+                if (PongWire.TryParseInt(payload, out int id))
                 {
                     PlayerId = id;
                     OnPlayerIdReceived?.Invoke(id);
                 }
                 break;
 
-            case "WAIT":
+            case PongCommands.Wait:
                 OnWaiting?.Invoke();
                 break;
 
-            case "ROOM":
-                if (parts.Length > 1)
+            case PongCommands.Room:
+                if (PongWire.TryParseTwoIntsCsv(payload, out int width, out int height))
                 {
-                    string[] size = parts[1].Split(',');
-                    if (size.Length >= 2 &&
-                        int.TryParse(size[0], out int width) &&
-                        int.TryParse(size[1], out int height))
-                    {
-                        OnRoomJoined?.Invoke(width, height);
-                    }
+                    OnRoomJoined?.Invoke(width, height);
                 }
                 break;
 
-            case "READY_STATUS":
-                if (parts.Length > 1)
+            case PongCommands.ReadyStatus:
+                if (!string.IsNullOrWhiteSpace(payload))
                 {
-                    string[] status = parts[1].Split(',');
+                    string[] status = payload.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                     if (status.Length >= 2 &&
-                        int.TryParse(status[0], out int p1Ready) &&
-                        int.TryParse(status[1], out int p2Ready))
+                        PongWire.TryParseInt(status[0], out int p1Ready) &&
+                        PongWire.TryParseInt(status[1], out int p2Ready))
                     {
                         OnReadyStatusUpdate?.Invoke(p1Ready == 1, p2Ready == 1);
                     }
                 }
                 break;
 
-            case "START":
-                if (parts.Length > 1)
+            case PongCommands.Start:
+                if (PongWire.TryParseTwoIntsCsv(payload, out int w, out int h))
                 {
-                    string[] size = parts[1].Split(',');
-                    if (size.Length >= 2 &&
-                        int.TryParse(size[0], out int w) &&
-                        int.TryParse(size[1], out int h))
-                    {
-                        OnGameStart?.Invoke(w, h);
-                    }
+                    OnGameStart?.Invoke(w, h);
                 }
                 break;
 
-            case "UPDATE":
-                if (parts.Length > 1)
+            case PongCommands.Update:
+                if (PongWire.TryParseSixIntsCsv(payload, out int ballX, out int ballY, out int p1Y, out int p2Y, out int s1, out int s2))
                 {
-                    string[] data = parts[1].Split(',');
-                    if (data.Length >= 6 &&
-                        int.TryParse(data[0], out int ballX) &&
-                        int.TryParse(data[1], out int ballY) &&
-                        int.TryParse(data[2], out int p1Y) &&
-                        int.TryParse(data[3], out int p2Y) &&
-                        int.TryParse(data[4], out int s1) &&
-                        int.TryParse(data[5], out int s2))
-                    {
-                        OnGameUpdate?.Invoke(ballX, ballY, p1Y, p2Y, s1, s2);
-                    }
+                    OnGameUpdate?.Invoke(ballX, ballY, p1Y, p2Y, s1, s2);
                 }
                 break;
 
-            case "OVER":
-                if (parts.Length > 1 && int.TryParse(parts[1], out int winner))
+            case PongCommands.Over:
+                if (PongWire.TryParseInt(payload, out int winner))
                 {
                     OnGameOver?.Invoke(winner);
                 }
                 break;
 
-            case "DISCONNECT":
-                if (parts.Length > 1 && int.TryParse(parts[1], out int disconnectedPlayer))
-                {
-                    OnOpponentDisconnected?.Invoke(disconnectedPlayer);
-                }
-                break;
-
-            case "OPPONENT_DISCONNECTED":
-                if (parts.Length > 1 && int.TryParse(parts[1], out int dcPlayer))
+            case PongCommands.OpponentDisconnected:
+                if (PongWire.TryParseInt(payload, out int dcPlayer))
                 {
                     OnOpponentDisconnected?.Invoke(dcPlayer);
                 }
                 break;
 
-            case "OPPONENT_RECONNECTED":
+            case PongCommands.OpponentReconnected:
                 OnOpponentReconnected?.Invoke();
                 break;
 
-            case "RECONNECTED":
+            case PongCommands.Reconnected:
                 OnReconnected?.Invoke();
                 break;
 
-            case "RESUME":
-                if (parts.Length > 1)
+            case PongCommands.Resume:
+                if (PongWire.TryParseTwoIntsCsv(payload, out int rw, out int rh))
                 {
-                    string[] sz = parts[1].Split(',');
-                    if (sz.Length >= 2 &&
-                        int.TryParse(sz[0], out int rw) &&
-                        int.TryParse(sz[1], out int rh))
-                    {
-                        OnGameResume?.Invoke(rw, rh);
-                    }
+                    OnGameResume?.Invoke(rw, rh);
                 }
                 break;
         }
@@ -226,7 +197,7 @@ public class NetworkClient
     /// </summary>
     public async Task SendReadyAsync()
     {
-        await SendMessageAsync("READY");
+        await SendMessageAsync(PongCommands.Ready);
     }
 
     /// <summary>
@@ -234,7 +205,7 @@ public class NetworkClient
     /// </summary>
     public async Task SendMoveAsync(string direction)
     {
-        await SendMessageAsync($"MOVE|{direction}");
+        await SendMessageAsync($"{PongCommands.Move}|{direction}");
     }
 
     /// <summary>
@@ -242,7 +213,7 @@ public class NetworkClient
     /// </summary>
     public async Task SendQuitAsync()
     {
-        await SendMessageAsync("QUIT");
+        await SendMessageAsync(PongCommands.Quit);
     }
 
     /// <summary>
