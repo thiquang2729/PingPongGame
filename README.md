@@ -8,7 +8,7 @@ Game Pong cổ điển chạy trên Console với khả năng chơi **2 người
 
 ---
 
-## 📋 Tính năng
+## 📋 1. Tính năng
 
 | Tính năng | Mô tả |
 |-----------|-------|
@@ -21,7 +21,7 @@ Game Pong cổ điển chạy trên Console với khả năng chơi **2 người
 
 ---
 
-## 🚀 Cách sử dụng
+## 🚀 2. Cách sử dụng
 
 ### Yêu cầu
 - .NET 6.0 trở lên
@@ -66,7 +66,7 @@ dotnet run --project Client -- 192.168.1.xxx 5000
 
 ---
 
-## 🎮 Điều khiển
+## 🎮 3. Điều khiển
 
 | Phím | Chức năng |
 |------|-----------|
@@ -77,7 +77,7 @@ dotnet run --project Client -- 192.168.1.xxx 5000
 
 ---
 
-## 📁 Cấu trúc Project
+## 📁 4. Cấu trúc Project
 
 ```
 PongGame/
@@ -96,7 +96,7 @@ PongGame/
 
 ---
 
-## 📡 Giao thức truyền thông
+## 📡 5. Giao thức truyền thông
 
 ### Client → Server
 | Lệnh | Mô tả |
@@ -121,7 +121,7 @@ PongGame/
 
 ---
 
-## 🔧 Cấu hình
+## 🔧 6. Cấu hình
 
 ### Thay đổi Port Server
 ```powershell
@@ -136,7 +136,7 @@ public int WinningScore { get; } = 5; // Mặc định 5 điểm
 
 ---
 
-## ⚠️ Xử lý lỗi thường gặp
+## ⚠️ 7. Xử lý lỗi thường gặp
 
 | Lỗi | Giải pháp |
 |-----|-----------|
@@ -146,6 +146,6 @@ public int WinningScore { get; } = 5; // Mặc định 5 điểm
 
 ---
 
-## 📝 License
+## 📝 8. License
 
 MIT License - Tự do sử dụng và chỉnh sửa.
