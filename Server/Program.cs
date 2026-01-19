@@ -4,8 +4,8 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        Console.Title = "Pong Server";
-        Console.CursorVisible = false;
+        Console.Title = "Pong Server"; 
+        Console.CursorVisible = false; 
 
         int port = 5000;
 
