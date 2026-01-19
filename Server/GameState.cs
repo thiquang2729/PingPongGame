@@ -41,8 +41,8 @@ public class GameState
     }
 
     /// <summary>
-    /// Reset toàn bộ game về trạng thái ban đầu
-    /// </summary>
+    /// Reset toàn bộ game về trạng thái ban đầu 
+    /// </summary> 
     public void ResetGame()
     {
         Score1 = 0;
