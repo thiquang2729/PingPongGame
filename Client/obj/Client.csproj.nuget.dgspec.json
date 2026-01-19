@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Dev\\Code\\PingPongGame\\Client\\Client.csproj": {}
+    "C:\\Users\\ACER\\OneDrive\\Desktop\\LTM\\PingPongGame\\Client\\Client.csproj": {}
   },
   "projects": {
-    "D:\\Dev\\Code\\PingPongGame\\Client\\Client.csproj": {
+    "C:\\Users\\ACER\\OneDrive\\Desktop\\LTM\\PingPongGame\\Client\\Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Dev\\Code\\PingPongGame\\Client\\Client.csproj",
+        "projectUniqueName": "C:\\Users\\ACER\\OneDrive\\Desktop\\LTM\\PingPongGame\\Client\\Client.csproj",
         "projectName": "Client",
-        "projectPath": "D:\\Dev\\Code\\PingPongGame\\Client\\Client.csproj",
-        "packagesPath": "C:\\Users\\QuangThi\\.nuget\\packages\\",
-        "outputPath": "D:\\Dev\\Code\\PingPongGame\\Client\\obj\\",
+        "projectPath": "C:\\Users\\ACER\\OneDrive\\Desktop\\LTM\\PingPongGame\\Client\\Client.csproj",
+        "packagesPath": "C:\\Users\\ACER\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ACER\\OneDrive\\Desktop\\LTM\\PingPongGame\\Client\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\QuangThi\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\ACER\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
