@@ -6,8 +6,8 @@ class Program
     static Display? _display;
     static bool _isGameRunning;
     static bool _isGameOver;
-    static bool _isInRoom;
-    static bool _isReady;
+    static bool _isInRoom; 
+    static bool _isReady; 
     static bool _opponentReady;
     static bool _waitingForOpponent;
     static int _boardWidth = 80;
